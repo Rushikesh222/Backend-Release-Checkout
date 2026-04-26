@@ -2,7 +2,8 @@ import express from "express";
 import cors from "cors";
 import connectDB from "./src/config/db.js";
 import Release from "./src/models/release.model.js";
-const dotenv = require("dotenv");
+import dotenv from "dotenv";
+
 dotenv.config();
 
 

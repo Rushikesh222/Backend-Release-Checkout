@@ -1,9 +1,9 @@
 import express from "express";
-import connectDB from "../../src/config/db.js";
+import connectDB from "./src/config/db.js";
 import Release from "../../src/models/release.model.js";
-const dotenv = require("dotenv");
-dotenv.config();
+import dotenv from "dotenv";
 
+dotenv.config();
 const router = express.Router();
 
 // Connect DB (do this once in your main server ideally)
