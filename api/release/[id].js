@@ -1,6 +1,6 @@
 import express from "express";
-import connectDB from "../config/db.js";
-import Release from "../models/release.model.js";
+import connectDB from "../../src/config/db.js";
+import Release from "../../src/models/release.model.js";
 const dotenv = require("dotenv");
 dotenv.config();
 
