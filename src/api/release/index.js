@@ -1,5 +1,5 @@
-import connectDB from "../../lib/db.js";
-import Release from "../../models/Release.js";
+import connectDB from "../../config/db.js";
+import Release from "../../models/release.model.js";
 
 export default async function handler(req, res) {
   await connectDB();
