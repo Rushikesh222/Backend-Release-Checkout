@@ -1,13 +1,18 @@
 import connectDB from "../../src/config/db.js";
 import Release from "../../src/models/release.model.js";
-
+import cors from "cors";
+require("dotenv").config();
 
 export default async function handler(req, res) {
   await connectDB();
 
-  res.setHeader("Access-Control-Allow-Origin", "*"); 
-  res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+const allowedOrigin = process.env.CORS_ORIGIN || '*';
+app.use(cors({
+	origin: allowedOrigin,
+	credentials: true,
+	methods: ['GET','POST','PUT','DELETE','OPTIONS'],
+	allowedHeaders: ['Content-Type','Authorization']
+}));
 
    if (req.method === "OPTIONS") {
     return res.status(200).end();
