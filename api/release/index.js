@@ -1,22 +1,21 @@
 import connectDB from "../../src/config/db.js";
 import Release from "../../src/models/release.model.js";
-import cors from "cors";
-require("dotenv").config();
+
+function setCors(res) {
+  res.setHeader("Access-Control-Allow-Origin", "*"); // or your frontend URL
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+}
+
+
 
 export default async function handler(req, res) {
+  setCors(res);
+  if (req.method === "OPTIONS") {
+   return res.status(200).end();
+ }
   await connectDB();
 
-const allowedOrigin = process.env.CORS_ORIGIN || '*';
-app.use(cors({
-	origin: allowedOrigin,
-	credentials: true,
-	methods: ['GET','POST','PUT','DELETE','OPTIONS'],
-	allowedHeaders: ['Content-Type','Authorization']
-}));
-
-   if (req.method === "OPTIONS") {
-    return res.status(200).end();
-  }
 
   if (req.method === "GET") {
     const releases = await Release.find();
