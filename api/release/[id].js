@@ -1,23 +1,46 @@
-import connectDB from "../../src/config/db.js";
-import Release from "../../src/models/release.model.js";
+import express from "express";
+import connectDB from "../config/db.js";
+import Release from "../models/release.model.js";
+const dotenv = require("dotenv");
+dotenv.config();
 
-function setCors(res) {
-  res.setHeader("Access-Control-Allow-Origin", "*"|| "http://localhost:5173/"); // or your frontend URL
-  res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-}
+const router = express.Router();
 
-export default async function handler(req, res) {
-  setCors(res);
+// Connect DB (do this once in your main server ideally)
+connectDB();
+
+// CORS middleware (simpler in Express)
+router.use((req, res, next) => {
+  res.header(
+    "Access-Control-Allow-Origin",
+    process.env.CORS_ORIGIN || "http://localhost:5173"
+  );
+  res.header(
+    "Access-Control-Allow-Methods",
+    "GET,POST,PUT,DELETE,OPTIONS"
+  );
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization"
+  );
+
   if (req.method === "OPTIONS") {
-    return res.status(200).end();
+    return res.sendStatus(200);
   }
-  await connectDB();
 
-  const { id } = req.query;
+  next();
+});
 
-  if (req.method === "PUT") {
+
+// ✅ UPDATE (PUT)
+router.put("/releases/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
     const { steps, additionalInfo } = req.body;
+
+    if (!id) {
+      return res.status(400).json({ message: "ID is required" });
+    }
 
     const updated = await Release.findByIdAndUpdate(
       id,
@@ -25,16 +48,37 @@ export default async function handler(req, res) {
       { new: true }
     );
 
-    return res.status(200).json({
+    if (!updated) {
+      return res.status(404).json({ message: "Release not found" });
+    }
+
+    res.status(200).json({
       ...updated.toObject(),
       status: updated.getStatus(),
     });
-  }
 
-  if (req.method === "DELETE") {
-    await Release.findByIdAndDelete(id);
-    return res.status(200).json({ message: "Deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
+});
 
-  return res.status(405).json({ message: "Method not allowed" });
-}
+
+// ✅ DELETE
+router.delete("/releases/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const deleted = await Release.findByIdAndDelete(id);
+
+    if (!deleted) {
+      return res.status(404).json({ message: "Release not found" });
+    }
+
+    res.status(200).json({ message: "Deleted successfully" });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+export default router;

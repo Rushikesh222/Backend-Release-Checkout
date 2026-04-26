@@ -1,34 +1,47 @@
-import connectDB from "../../src/config/db.js";
-import Release from "../../src/models/release.model.js";
-
-function setCors(res) {
-  res.setHeader("Access-Control-Allow-Origin", "*"|| "http://localhost:5173/"); // or your frontend URL
-  res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-}
+import express from "express";
+import cors from "cors";
+import connectDB from "../config/db.js";
+import Release from "../models/release.model.js";
+const dotenv = require("dotenv");
+dotenv.config();
 
 
+const app = express();
 
-export default async function handler(req, res) {
-  setCors(res);
-  if (req.method === "OPTIONS") {
-   return res.status(200).end();
- }
-  await connectDB();
+// Middleware
+app.use(express.json());
 
+const allowedOrigin = process.env.CORS_ORIGIN || "*";
+app.use(
+  cors({
+    origin: allowedOrigin,
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
-  if (req.method === "GET") {
+// Connect DB once (not inside every request)
+connectDB();
+
+// Routes
+app.get("/releases", async (req, res) => {
+  try {
     const releases = await Release.find();
 
-    const withStatus = releases.map(r => ({
+    const withStatus = releases.map((r) => ({
       ...r.toObject(),
       status: r.getStatus(),
     }));
 
-    return res.status(200).json(withStatus);
+    res.status(200).json(withStatus);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
+});
 
-  if (req.method === "POST") {
+app.post("/releases", async (req, res) => {
+  try {
     const { name, date, additionalInfo } = req.body;
 
     if (!name || !date) {
@@ -43,7 +56,7 @@ export default async function handler(req, res) {
       "Approval",
       "Deploy to Production",
       "Monitoring",
-    ].map(step => ({ name: step }));
+    ].map((step) => ({ name: step }));
 
     const release = await Release.create({
       name,
@@ -52,11 +65,22 @@ export default async function handler(req, res) {
       steps,
     });
 
-    return res.status(201).json({
+    res.status(201).json({
       ...release.toObject(),
       status: release.getStatus(),
     });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
+});
 
-  return res.status(405).json({ message: "Method not allowed" });
-}
+// Handle unsupported routes
+app.use((req, res) => {
+  res.status(405).json({ message: "Method not allowed" });
+});
+
+// Start server
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
